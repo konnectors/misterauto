@@ -51,7 +51,10 @@ function authenticate(username, password) {
 }
 
 function parseDocuments($) {
-  const docs = scrape(
+  const orders = $('tr', 'tbody').toArray()
+
+  // Orders which need normal scraping
+  const normalOrders = scrape(
     $,
     {
       id: 'td:nth-child(2)',
@@ -66,11 +69,42 @@ function parseDocuments($) {
       fileurl: {
         sel: 'td:nth-child(6) a',
         attr: 'href'
-      }
-    },
-    '#cmd_table tbody tr'
+      },
+    }, '#cmd_table tbody tr:has(> td[rowspan])'
   )
-  return docs.map(doc => ({
+
+  var preParsedOrders = parseTable(orders, $)  // to retreive a list of orders and groups of orders
+  var parsedOrders = [] // list of future parsed orders
+
+  // Orders of a group which need an other type of scrapping
+  preParsedOrders.map(item => {
+    if (item.groupDate != null) { // we works only with orders which are in a group
+      // For each order in the group
+      item.rows.map(order => {
+        // Scrape it 
+        const groupOrders = scrape(
+          $(order),
+          {
+            id: 'td:nth-child(1)',
+            amount: {
+              sel: 'td:nth-child(2)',
+              parse: normalizePrice
+            },
+            fileurl: {
+              sel: 'td:nth-child(5) a',
+              attr: 'href'
+            }
+          }
+        )
+        groupOrders.date = parseDate(item.groupDate)
+        parsedOrders.push(groupOrders)
+      })
+    }
+  })
+
+  parsedOrders = parsedOrders.concat(normalOrders)
+
+  return parsedOrders.map(doc => ({
     ...doc,
     currency: '€',
     vendor: 'Mister Auto',
@@ -80,6 +114,42 @@ function parseDocuments($) {
       version: 1
     }
   }))
+}
+
+/**
+ * @return parsedRows: list of rows and groups of rows
+ */
+function parseTable(rows, $) {
+  var parsedRows = []
+
+  // For each order
+  for (let index = 0; index < rows.length; index++) {
+    // Retreive first <td>
+    const firstTd = $(rows[index]).children().first()
+    var groupSize = firstTd.attr('rowspan')
+
+    if (groupSize == 1)
+      groupSize = null
+
+    // If first <td> has an attribut rowspan : it's a group
+    if (groupSize != null) {
+      // This first <td> with rowspan contain the date of a group of order
+      const groupDate = firstTd.text()
+      // So this order must be parsed normally
+      parsedRows.push(rows[index])
+      parsedRows.push({ groupDate: groupDate, rows: [] }) // create the group with it's date
+
+      // For each order in the group
+      for (let i = index + 1; i < groupSize; i++) {
+        parsedRows[parsedRows.length - 1].rows.push(rows[i]) // add it to it's group
+      }
+      index = index + groupSize - 1
+    }
+    else { // A normal order not inside a group
+      parsedRows.push(rows[index])
+    }
+  }
+  return parsedRows
 }
 
 function normalizePrice(price) {
