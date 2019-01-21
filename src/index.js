@@ -52,27 +52,30 @@ function authenticate(username, password) {
 
 function parseDocuments($) {
   const orders = $('tr', 'tbody').toArray()
+  const normalOrders = scrapeNormalOrders($)
+  const specialOrders = scrapeSpecialOrders($, orders)
 
-  // Orders which need normal scraping
-  const normalOrders = scrape(
-    $,
-    {
-      id: 'td:nth-child(2)',
-      amount: {
-        sel: 'td:nth-child(3)',
-        parse: normalizePrice
-      },
-      date: {
-        sel: 'td:nth-child(1)',
-        parse: parseDate
-      },
-      fileurl: {
-        sel: 'td:nth-child(6) a',
-        attr: 'href'
-      },
-    }, '#cmd_table tbody tr:has(> td[rowspan])'
-  )
+ let parsedOrders = specialOrders.concat(normalOrders)
 
+  return parsedOrders.map(doc => ({
+    ...doc,
+    currency: '€',
+    vendor: 'Mister Auto',
+    filename: formatFileName(doc),
+    metadata: {
+      importDate: new Date(),
+      version: 1
+    }
+  }))
+}
+
+/**
+ * Scrape orders which need a special scraping (an order in a group which is not the first one of the group)
+ * @param {*} $ : Cheerio
+ * @param {*} orders : the list of all orders
+ * @return parsedOrders : list of scraped special orders
+ */
+function scrapeSpecialOrders($, orders) {
   var preParsedOrders = parseTable(orders, $)  // to retreive a list of orders and groups of orders
   var parsedOrders = [] // list of future parsed orders
 
@@ -101,19 +104,33 @@ function parseDocuments($) {
       })
     }
   })
+  return parsedOrders
+}
 
-  parsedOrders = parsedOrders.concat(normalOrders)
-
-  return parsedOrders.map(doc => ({
-    ...doc,
-    currency: '€',
-    vendor: 'Mister Auto',
-    filename: formatFileName(doc),
-    metadata: {
-      importDate: new Date(),
-      version: 1
-    }
-  }))
+/**
+ * Scrape orders which need normal scraping (single orders or first order of a group)
+ * @param {*} $ : Cheerio
+ * @return list of scraped normal orders
+ */
+function scrapeNormalOrders($) {
+    return scrape(
+      $,
+      {
+        id: 'td:nth-child(2)',
+        amount: {
+          sel: 'td:nth-child(3)',
+          parse: normalizePrice
+        },
+        date: {
+          sel: 'td:nth-child(1)',
+          parse: parseDate
+        },
+        fileurl: {
+          sel: 'td:nth-child(6) a',
+          attr: 'href'
+        },
+      }, '#cmd_table tbody tr:has(> td[rowspan])'
+    )
 }
 
 /**
