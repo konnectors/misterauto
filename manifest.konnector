@@ -5,7 +5,7 @@
   "language": "node",
   "icon": "icon.svg",
   "slug": "misterauto",
-  "source": "git://github.com/konnectors/misterauto.git",
+  "source": "git@github.com:konnectors/misterauto.git",
   "editor": "Cozy",
   "vendor_link": "https://www.mister-auto.com/moncompte/",
   "categories": [
