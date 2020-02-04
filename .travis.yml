@@ -1,11 +1,8 @@
 language: node_js
 node_js:
-- '8'
+- '12'
 env:
   global:
-  - GH_USER_EMAIL="travis@example.org"
-  - GH_USER_NAME="cozy-bot"
-  - DEPLOY_REPOSITORY="git@github.com:konnectors/misterauto.git"
   - secure: WAC5yCbY2Qg+5gQxYT03N/Iwy7mUwyIXekY8uhIU/F7E1xuTPPGDc1vcqJpdZ0kTtm+IxDrgzr6THWG7JCM6j40FbXgUpEGwHJUwz/Kv5I9bjgf7t9Jtf7BeE2zEFO7Y8AhLNnIpYN5vIUxSqeEOmgnujTstBFCkPh1Me6jjf/aApkh8XGjT/3uVm5Xja5t8HaEuCkpxJmF4hHFMMCTwj5uhX2YzwIITb9Kxmhig33q6SnluKRkTaVLRI3IuG/0vm2mMU6PfqdHyP9H+VhUGiJ9jNJvYi8rxkF+ZtNLA19xe+pc/fbEYEvobBy0ZUQYKsPzLTvw3W6bSTFBvSmEKuul+oJDSgPLal5hZX6/Obejwv8IViR8myEnMakI4BGGitnbgdVIsMxuXRSkJQ7rBeYila7F6cgUzPeE3q1iav2yNCRU9+rVPc3Yn5SWWTX4ejtk7dI9TpHP969zsQRifT3kzf9fclYuxqUAdQuyKk7r0ain7X/e/I8br6JWIDuhlQqG8uVsQe2AcJy+yQK6ZbjRUs5eWRZosUDQpb71Df6EnIzFsGbthM9SDFHpf+8aVNa3rLdgnHhOF2m/E587Dz3iYjNYt+lISqalkfr/ELAgZkglJTFS395slgiPObwfhWt6sJuuStdxNRvphNNXpXdSxIb5lFv7+OhYLWWu72fw=
 cache:
   yarn: true
@@ -18,7 +15,6 @@ branches:
 script:
 - yarn lint
 - yarn build
-- yarn run check
 deploy:
 - provider: script
   skip-cleanup: true
